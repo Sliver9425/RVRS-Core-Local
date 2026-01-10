@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+
+enum Role {
+  STUDENT
+  PROFESSOR
+  ADMIN
+}
+
+enum ComplaintStatus {
+  RECEIVED        // Recibido
+  ANALYZING       // En cola de IA
+  INVESTIGATING   // Revisión manual
+  SANCTIONED      // Sanción aplicada
+  REJECTED        // Descartada
+}
+
+enum Building {
+  FACULTAD_INGENIERIA
+  FACULTAD_ADMINISTRACION
+  FACULTAD_JURISPRUDENCIA
+  BIBLIOTECA_CENTRAL
+  ESTADIO_UNIVERSITARIO
+}
+
+// --- MODELOS ---
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  
+  complaints Complaint[]
+
+  @@map("users")
+}
+
+model Complaint {
+  id          String          @id @default(uuid())
+  title       String
+  description String
+  
+  // Ubicación
+  building    Building
+  classroom   String?
+  
+  // Estado del proceso administrativo
+  status      ComplaintStatus @default(RECEIVED)
+  
+  // Evidencia
+  evidenceUrl  String?
+  evidenceType String?        // "IMAGE" | "VIDEO"
+
+  // --- NUEVOS CAMPOS PARA IA (RESULTADOS DE GEMINI) ---
+  aiStatus          String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  aiSeverity        String?  // HIGH, MEDIUM, LOW
+  aiScore           Float?   // Confianza (0.0 - 1.0)
+  suggestedSanction String?  // Lo que Gemini sugirió según el estatuto
+  analysisJson      Json?    // El reporte completo (motivo, artículo citado, etc.)
+
+  // Relación con Usuario
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+
+  // Auditoría
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  finalSanction String?       @db.Text
+
+  @@map("complaints")
+}

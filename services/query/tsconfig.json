@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    /* Configuración Básica */
+    "target": "es2020",                       /* Versión de JavaScript a generar */
+    "module": "commonjs",                     /* Tipo de módulos (para Node.js estándar) */
+    "rootDir": "./src",                       /* Dónde está tu código */
+    "outDir": "./dist",                       /* Dónde se guardará lo compilado */
+    
+    /* Interoperabilidad (Vital para importar librerías) */
+    "esModuleInterop": true,                  /* Permite importar módulos CommonJS como ES6 */
+    "forceConsistentCasingInFileNames": true, /* Evita errores de mayúsculas/minúsculas */
+    "strict": true,                           /* Modo estricto (ayuda a evitar bugs) */
+    "skipLibCheck": true,                     /* Salta chequeo de tipos en librerías (ahorra errores ajenos) */
+    "resolveJsonModule": true                 /* Permite importar archivos .json si los necesitas */
+  },
+  "include": ["src/**/*"],                    /* Qué compilar */
+  "exclude": ["node_modules"]                 /* Qué ignorar */
+}
