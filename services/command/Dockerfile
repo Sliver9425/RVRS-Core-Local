@@ -2,34 +2,38 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Instalar dependencias necesarias
 RUN apk add --no-cache openssl libc6-compat
 
-# 1. Instalar pnpm
+# 1. Instalar pnpm globalmente
 RUN npm install -g pnpm
 
-# 2. Copiar archivos de configuración raíz
+# 2. Copiar configuración raíz
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 
-# 3. Copiar PAQUETES COMPARTIDOS (Database + TypeScript Config)
+# 3. Copiar paquetes compartidos
 COPY packages/database ./packages/database
 COPY packages/typescript-config ./packages/typescript-config
 
-# 4. Copiar el servicio específico
-# (OJO: Si estás en services/query/Dockerfile, cambia 'command' por 'query')
+# 4. Copiar el servicio Command
 COPY services/command ./services/command
 
 # 5. Instalar dependencias
-RUN pnpm install
+RUN pnpm install --no-frozen-lockfile
 
-# 6. Generar Prisma Client
+# 6. Generar cliente de Prisma
 WORKDIR /app/packages/database
 RUN npx prisma generate
 
-# 7. Volver al servicio y ejecutar
-# (OJO: Si estás en services/query/Dockerfile, cambia 'command' por 'query')
+# ==========================================
+# NUEVO 6.5: COMPILAR PAQUETE DE BASE DE DATOS
+# ==========================================
+# Esto crea la carpeta /app/packages/database/dist
+RUN pnpm build
+
+# 7. Compilar el servicio Command
 WORKDIR /app/services/command
+RUN pnpm build
 
-EXPOSE 3001
-# (Usa 3002 si es query)
-
-CMD ["pnpm", "dev"]
+# 8. EJECUTAR (Start)
+CMD ["npm", "start"]

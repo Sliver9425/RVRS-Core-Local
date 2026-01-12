@@ -1,0 +1,96 @@
+{
+    "family": "rvrs-full-stack",
+    "networkMode": "awsvpc",
+    "executionRoleArn": "arn:aws:iam::857521755952:role/LabRole",
+    "taskRoleArn": "arn:aws:iam::857521755952:role/LabRole",
+    "cpu": "2048",
+    "memory": "4096",
+    "requiresCompatibilities": ["FARGATE"],
+    "containerDefinitions": [
+        {
+            "name": "zookeeper",
+            "image": "confluentinc/cp-zookeeper:7.3.0",
+            "essential": true,
+            "environment": [
+                { "name": "ZOOKEEPER_CLIENT_PORT", "value": "2181" },
+                { "name": "ZOOKEEPER_TICK_TIME", "value": "2000" }
+            ]
+        },
+        {
+            "name": "kafka",
+            "image": "confluentinc/cp-kafka:7.3.0",
+            "essential": true,
+            "dependsOn": [{ "containerName": "zookeeper", "condition": "START" }],
+            "environment": [
+                { "name": "KAFKA_BROKER_ID", "value": "1" },
+                { "name": "KAFKA_ZOOKEEPER_CONNECT", "value": "127.0.0.1:2181" },
+                { "name": "KAFKA_ADVERTISED_LISTENERS", "value": "PLAINTEXT://127.0.0.1:9092" },
+                { "name": "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", "value": "1" }
+            ]
+        },
+        {
+            "name": "postgres",
+            "image": "postgres:15-alpine",
+            "essential": true,
+            "environment": [
+                { "name": "POSTGRES_USER", "value": "admin" },
+                { "name": "POSTGRES_PASSWORD", "value": "password123" },
+                { "name": "POSTGRES_DB", "value": "rvrs_command_db" }
+            ]
+        },
+        {
+            "name": "redis",
+            "image": "redis:alpine",
+            "essential": true
+        },
+        {
+            "name": "command-service",
+            "image": "857521755952.dkr.ecr.us-east-1.amazonaws.com/rvrs-command-service",
+            "essential": true,
+            "dependsOn": [{ "containerName": "kafka", "condition": "START" }, { "containerName": "postgres", "condition": "START" }],
+            "environment": [
+                { "name": "PORT", "value": "3001" },
+                { "name": "DATABASE_URL", "value": "postgresql://admin:password123@127.0.0.1:5432/rvrs_command_db?schema=public" },
+                { "name": "KAFKA_BROKER", "value": "127.0.0.1:9092" }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/rvrs-stack",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-create-group": "true",
+                    "awslogs-stream-prefix": "command"
+                }
+            }
+        },
+        {
+            "name": "query-service",
+            "image": "857521755952.dkr.ecr.us-east-1.amazonaws.com/rvrs-query-service",
+            "essential": true,
+            "environment": [
+                { "name": "PORT", "value": "3002" },
+                { "name": "DATABASE_URL", "value": "postgresql://admin:password123@127.0.0.1:5432/rvrs_command_db?schema=public" },
+                { "name": "KAFKA_BROKER", "value": "127.0.0.1:9092" },
+                { "name": "REDIS_HOST", "value": "127.0.0.1" },
+                { "name": "REDIS_PORT", "value": "6379" }
+            ]
+        },
+        {
+            "name": "ai-worker",
+            "image": "857521755952.dkr.ecr.us-east-1.amazonaws.com/rvrs-ai-worker",
+            "essential": true,
+            "environment": [
+                { "name": "KAFKA_BOOTSTRAP_SERVERS", "value": "127.0.0.1:9092" }
+            ]
+        },
+        {
+            "name": "gateway",
+            "image": "857521755952.dkr.ecr.us-east-1.amazonaws.com/rvrs-gateway",
+            "essential": true,
+            "portMappings": [
+                { "containerPort": 80, "hostPort": 80, "protocol": "tcp" }
+            ],
+            "dependsOn": [{ "containerName": "command-service", "condition": "START" }]
+        }
+    ]
+}

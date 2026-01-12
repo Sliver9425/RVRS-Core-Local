@@ -36,3 +36,19 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+
+# --- Python (AI Worker) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+venv/
+ENV/
