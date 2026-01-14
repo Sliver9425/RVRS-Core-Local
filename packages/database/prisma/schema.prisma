@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  provider      = "prisma-client-js"
+  // "debian-openssl-3.0.x" es el estándar para node:slim, o simplemente "native"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {

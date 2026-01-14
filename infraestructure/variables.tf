@@ -47,7 +47,6 @@ variable "availability_zones" {
 # ==========================================
 # 3. PUERTOS DE MICROSERVICIOS
 # ==========================================
-# Definimos esto aquí para no usar "números mágicos" en el código
 
 variable "gateway_port" {
   description = "Puerto del API Gateway (Nginx)"
@@ -67,10 +66,14 @@ variable "query_service_port" {
   default     = 3002
 }
 
+# ==========================================
+# 4. CREDENCIALES Y SERVICIOS EXTERNOS (SaaS/PaaS)
+# ==========================================
+
 variable "b2_key_id" {
   description = "Backblaze Key ID"
   type        = string
-  sensitive   = true # Esto oculta el valor en los logs de Terraform
+  sensitive   = true 
 }
 
 variable "b2_application_key" {
@@ -86,6 +89,13 @@ variable "b2_bucket_id" {
 
 variable "gemini_api_key" {
   description = "Google Gemini API Key"
+  type        = string
+  sensitive   = true
+}
+
+# --- ESTA ES LA VARIABLE QUE FALTABA ---
+variable "supabase_db_url" {
+  description = "URL de conexión completa a Supabase (PaaS) con password codificado"
   type        = string
   sensitive   = true
 }

@@ -1,14 +1,14 @@
-FROM node:18-alpine
+FROM node:18-slim
+
+# Instalamos netcat y procps por si necesitamos debug, además de lo básico
+RUN apt-get update -y && apt-get install -y openssl ca-certificates netcat-openbsd
 
 WORKDIR /app
-
-# Instalar dependencias necesarias
-RUN apk add --no-cache openssl libc6-compat
 
 # 1. Instalar pnpm globalmente
 RUN npm install -g pnpm
 
-# 2. Copiar configuración raíz
+# 2. Copiar configuración raíz (Monorepo Standard)
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 
 # 3. Copiar paquetes compartidos
@@ -21,19 +21,26 @@ COPY services/command ./services/command
 # 5. Instalar dependencias
 RUN pnpm install --no-frozen-lockfile
 
-# 6. Generar cliente de Prisma
+# 6. Generar cliente de Prisma y Compilar DB
 WORKDIR /app/packages/database
 RUN npx prisma generate
-
-# ==========================================
-# NUEVO 6.5: COMPILAR PAQUETE DE BASE DE DATOS
-# ==========================================
-# Esto crea la carpeta /app/packages/database/dist
 RUN pnpm build
 
 # 7. Compilar el servicio Command
 WORKDIR /app/services/command
 RUN pnpm build
 
-# 8. EJECUTAR (Start)
+# ==========================================
+# PARCHE DE RED IPV4 (NUEVO)
+# ==========================================
+# 1. Copiamos el script dentro de la imagen
+COPY services/command/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# 2. Le damos permisos de ejecución (CRÍTICO)
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# 3. Definimos este script como la "puerta de entrada"
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# 4. El comando que se pasará al entrypoint
 CMD ["npm", "start"]

@@ -1,9 +1,13 @@
-FROM node:18-alpine
+FROM node:18-slim
+
+RUN apt-get update -y && apt-get install -y openssl ca-certificates
+
+RUN echo "precedence ::ffff:0:0/96 100" > /etc/gai.conf
 
 WORKDIR /app
 
 # Dependencias del sistema
-RUN apk add --no-cache openssl libc6-compat
+
 
 # 1. Instalar pnpm
 RUN npm install -g pnpm
@@ -35,5 +39,13 @@ RUN pnpm build
 WORKDIR /app/services/query
 RUN pnpm build
 
-# 8. START: Ejecutar versión compilada (node dist/index.js)
+COPY services/command/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# 2. Le damos permisos de ejecución (CRÍTICO)
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# 3. Definimos este script como la "puerta de entrada"
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# 4. El comando que se pasará al entrypoint
 CMD ["npm", "start"]

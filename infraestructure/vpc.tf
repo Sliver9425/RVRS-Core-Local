@@ -62,3 +62,34 @@ resource "aws_route_table_association" "public_2" {
   subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public.id
 }
+
+# Security Group para el Bastion
+resource "aws_security_group" "bastion" {
+  name        = "rvrs-bastion-sg"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 22
+    to_port     = 22
+    cidr_blocks = ["0.0.0.0/0"] # Permite SSH
+  }
+
+  egress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# La instancia Bastion
+resource "aws_instance" "bastion" {
+  ami           = "ami-0c101f26f147fa7fd" # Amazon Linux 2023 us-east-1
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public_1.id # Usando tu subnet ya definida
+  vpc_security_group_ids = [aws_security_group.bastion.id]
+  key_name      = "vockey" # Requerido en AWS Academy
+
+  tags = { Name = "rvrs-bastion" }
+}
