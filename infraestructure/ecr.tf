@@ -23,3 +23,9 @@ resource "aws_ecr_repository" "gateway" {
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 }
+
+resource "aws_ecr_repository" "frontend" {
+  name                 = "rvrs-frontend"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}

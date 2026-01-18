@@ -14,18 +14,36 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
   network_mode             = "awsvpc"
   
   # OPTIMIZACIÓN: Bajamos recursos porque ya no corremos Postgres internamente
-  cpu                      = 2048  # 2 vCPU
-  memory                   = 5120  # 5 GB RAM
+  cpu                      = 4096  # 2 vCPU
+  memory                   = 8192  # 5 GB RAM
   
   execution_role_arn       = local.lab_role_arn
   task_role_arn            = local.lab_role_arn
 
   container_definitions = jsonencode([
     
+    {
+      name      = "frontend",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-frontend:v6",
+      essential = true,
+      portMappings = [{ containerPort = 3000 }], # Next.js corre en 3000 por defecto
+      environment = [
+        # IMPORTANTE: En el cliente (browser) usaremos rutas relativas (/api/...), 
+        # pero si haces SSR (Server Side Rendering), Nextjs necesita saber a dónde llamar internamente.
+        # En esta arquitectura local, el frontend llama a Nginx (localhost:80)
+        { name = "HOSTNAME", value = "0.0.0.0" },
+        { name = "NEXT_PUBLIC_API_URL", value = "/api" }, 
+        { name = "INTERNAL_API_URL", value = "http://127.0.0.1:80/api" }
+      ],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "frontend", "awslogs-create-group" = "true" }
+      }
+    },
     # --- 1. GATEWAY (NGINX) ---
     {
       name      = "gateway",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-gateway:latest",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-gateway:v6",
       essential = true,
       portMappings = [{ containerPort = 80 }],
       dependsOn = [
