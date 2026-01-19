@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Para la redirección
-import api from '@/lib/axios'; // Tu instancia de Axios configurada
+import Image from 'next/image'; // 👈 IMPORTANTE: Importamos Image
+import { useRouter } from 'next/navigation';
+import api from '@/lib/axios';
 
 export default function RegisterPage() {
-  const router = useRouter(); // Inicializamos el router
+  const router = useRouter();
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -16,14 +17,13 @@ export default function RegisterPage() {
   });
   
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // Estado para bloquear el botón mientras carga
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Validación local antes de enviar
     if (!formData.email.endsWith('@uce.edu.ec')) {
       setError('Solo se permiten correos institucionales @uce.edu.ec');
       setLoading(false);
@@ -32,21 +32,15 @@ export default function RegisterPage() {
 
     try {
       console.log('📡 Intentando registrar en el backend:', formData);
-      
-      // Petición real al backend
       const response = await api.post('/auth/register', formData);
       
       if (response.status === 201 || response.status === 200) {
         console.log('✅ Usuario creado:', response.data);
         alert('¡Registro exitoso! Redirigiendo al login...');
-        
-        // REDIRECCIÓN: Nos manda a la página de login
         router.push('/login');
       }
     } catch (err: any) {
       console.error('❌ Error capturado:', err);
-      
-      // Extraemos el error que devuelve tu Express (si existe)
       const serverMessage = err.response?.data?.error || 'Error de conexión con el servidor';
       setError(serverMessage);
     } finally {
@@ -55,9 +49,28 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-xl rounded-2xl border border-slate-100">
+    // 1. Contenedor Principal: "relative" para permitir posicionamiento absoluto adentro
+    <div className="relative flex min-h-screen items-center justify-center p-4">
+      
+      {/* 2. IMAGEN DE FONDO */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/UCE.jpg" // Asegúrate de que la imagen esté en la carpeta /public
+          alt="Campus Universidad Central del Ecuador"
+          fill // Esto hace que cubra toda la pantalla
+          className="object-cover" // Recorta la imagen para que no se deforme
+          priority // Carga la imagen con alta prioridad
+          unoptimized={true}
+        />
+        {/* 3. CAPA OSCURA (OVERLAY): Para que el formulario resalte */}
+        <div className="absolute inset-0 bg-black/60" /> 
+      </div>
+
+      {/* 4. FORMULARIO: z-10 para que flote ENCIMA de la imagen */}
+      <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl border border-slate-200">
+        
         <div className="text-center">
+          {/* Opcional: Logo de la UCE aquí si quisieras */}
           <h1 className="text-3xl font-extrabold text-blue-900 tracking-tight">Crear Cuenta</h1>
           <p className="mt-2 text-sm text-slate-600 font-medium">Sistema RVRS - Universidad Central</p>
         </div>
@@ -68,7 +81,7 @@ export default function RegisterPage() {
             <input
               type="text"
               required
-              className="w-full px-4 py-2 mt-1 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-black"
+              className="w-full px-4 py-2 mt-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-black bg-white"
               placeholder="Ej. Damian Quezada"
               onChange={(e) => setFormData({...formData, fullName: e.target.value})}
             />
@@ -79,7 +92,7 @@ export default function RegisterPage() {
             <input
               type="email"
               required
-              className="w-full px-4 py-2 mt-1 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-black"
+              className="w-full px-4 py-2 mt-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-black bg-white"
               placeholder="usuario@uce.edu.ec"
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
@@ -91,7 +104,7 @@ export default function RegisterPage() {
               type="password"
               required
               minLength={6}
-              className="w-full px-4 py-2 mt-1 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-black"
+              className="w-full px-4 py-2 mt-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-black bg-white"
               placeholder="Mínimo 6 caracteres"
               onChange={(e) => setFormData({...formData, password: e.target.value})}
             />
@@ -100,7 +113,7 @@ export default function RegisterPage() {
           <div>
             <label className="block text-sm font-semibold text-slate-700">Tipo de Usuario</label>
             <select 
-              className="w-full px-4 py-2 mt-1 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-black font-medium"
+              className="w-full px-4 py-2 mt-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none bg-white text-black font-medium"
               value={formData.role}
               onChange={(e) => setFormData({...formData, role: e.target.value})}
             >
@@ -128,7 +141,7 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500 font-medium">
+        <p className="text-center text-sm text-slate-600 font-medium">
           ¿Ya tienes cuenta?{' '}
           <Link href="/login" className="text-blue-700 hover:underline font-bold">
             Inicia sesión aquí

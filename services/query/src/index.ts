@@ -4,6 +4,9 @@ import { PrismaClient } from '@prisma/client';
 import { createClient } from 'redis'; 
 import dotenv from 'dotenv';
 
+// 1. 🔥 IMPORTAR CLIENTE RABBITMQ
+import { rabbit } from './config/rabbitmq';
+
 dotenv.config();
 
 const app = express();
@@ -18,7 +21,7 @@ redisClient.on('error', (err) => console.log('❌ Redis Client Error', err));
 
 const prisma = new PrismaClient();
 
-// --- CONFIGURACIÓN DE KAFKA ---
+// --- CONFIGURACIÓN DE KAFKA (Se mantiene igual) ---
 const kafka = new Kafka({
   clientId: 'query-service',
   brokers: [process.env.KAFKA_BROKER || 'localhost:9092']
@@ -26,10 +29,11 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: 'query-service-group' });
 
-const runConsumer = async () => {
+// Consumidor de Kafka (IA -> DB)
+const runKafkaConsumer = async () => {
   try {
     await consumer.connect();
-    console.log('👂 Query Service conectado a Kafka');
+    console.log('👂 [Kafka] Query Service conectado');
     await consumer.subscribe({ topic: 'complaint.processed', fromBeginning: false });
 
     await consumer.run({
@@ -39,11 +43,10 @@ const runConsumer = async () => {
         const payload = JSON.parse(message.value.toString());
         const { complaintId, analysis } = payload;
 
-        console.log(`\n📥 [RECIBIDO DE IA] ID: ${complaintId}`);
+        console.log(`\n📥 [KAFKA - RECIBIDO DE IA] ID: ${complaintId}`);
         
         if (analysis) {
             try {
-              // 1. Actualizar DB con el resultado de Gemini
               const updatedComplaint = await prisma.complaint.update({
                 where: { id: complaintId },
                 data: {
@@ -54,20 +57,15 @@ const runConsumer = async () => {
                   analysisJson: analysis as any, 
                 }
               });
-              console.log(`   ✅ DB actualizada.`);
+              console.log(`   ✅ DB actualizada con IA.`);
 
-              // 2. LIMPIEZA ESTRATÉGICA DE CACHÉ
-              // Borramos el caché de la denuncia individual
+              // Limpieza de Caché por actualización de IA
               await redisClient.del(`complaint:${complaintId}`);
-              
-              // Borramos el caché de la LISTA del usuario para que vea el cambio en su historial
               await redisClient.del(`user_complaints:${updatedComplaint.userId}`);
               await redisClient.del('all_complaints');
               
-              console.log(`   🧹 Caché invalidado para usuario: ${updatedComplaint.userId}`);
-
             } catch (dbError) {
-              console.error(`   ❌ Error guardando en DB:`, dbError);
+              console.error(`   ❌ Error guardando IA en DB:`, dbError);
             }
         }
       },
@@ -77,9 +75,34 @@ const runConsumer = async () => {
   }
 };
 
+// --- 🔥 NUEVO: CONSUMIDOR RABBITMQ (Command -> Cache Invalidation) ---
+const runRabbitConsumer = async () => {
+    // Usamos el nuevo método de la clase
+    await rabbit.consumeEvent('query_service_sync', async (content) => {
+        
+        console.log(`\n📥 [RABBITMQ] Evento recibido: ${content.title} (ID: ${content.id})`);
+
+        // ESTRATEGIA CQRS: INVALIDACIÓN DE CACHÉ
+        try {
+            // Borrar lista general
+            await redisClient.del('all_complaints');
+            
+            // Borrar lista del usuario específico
+            if (content.userId) {
+                await redisClient.del(`user_complaints:${content.userId}`);
+                console.log(`   🧹 Caché limpiado para usuario ${content.userId}`);
+            }
+            
+        } catch (err) {
+            console.error('Error limpiando caché:', err);
+        }
+    });
+};
+
+
+
 // --- ENDPOINTS (LECTURA) ---
 
-// Obtener denuncias de un usuario (Dashboard List)
 app.get('/complaints/user/:userId', async (req: any, res: any) => {
   const { userId } = req.params;
   const cacheKey = `user_complaints:${userId}`;
@@ -104,7 +127,6 @@ app.get('/complaints/user/:userId', async (req: any, res: any) => {
   }
 });
 
-// Obtener detalle de una denuncia
 app.get('/complaints/:id', async (req: any, res: any) => {
   const { id } = req.params;
   const cacheKey = `complaint:${id}`;
@@ -128,7 +150,6 @@ app.get('/complaints/:id', async (req: any, res: any) => {
 
 app.get('/complaints', async (req: any, res: any) => {
   try {
-    // Intentamos buscar en caché primero
     const cacheKey = 'all_complaints';
     const cachedData = await redisClient.get(cacheKey);
     
@@ -136,12 +157,10 @@ app.get('/complaints', async (req: any, res: any) => {
       return res.json(JSON.parse(cachedData));
     }
 
-    // Si no está en caché, buscamos en la base de datos
     const complaints = await prisma.complaint.findMany({
       orderBy: { createdAt: 'desc' }
     });
 
-    // Guardamos en caché por 60 segundos (para no saturar)
     await redisClient.setEx(cacheKey, 60, JSON.stringify(complaints));
     
     res.json(complaints);
@@ -157,12 +176,21 @@ app.get('/health', (req, res) => {
 
 // --- INICIAR SERVIDOR ---
 const startServer = async () => {
+    // 1. Conectar Redis
     await redisClient.connect();
     console.log('✅ Redis Conectado');
 
+    // 2. 🔥 Conectar RabbitMQ (Nuevo)
+    const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
+    await rabbit.connect(rabbitUrl);
+
+    // 3. Iniciar Server Express
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`🚀 Query Service corriendo en puerto ${PORT}`);
-      runConsumer();
+      
+      // 4. Arrancar Consumidores en segundo plano
+      runKafkaConsumer();  // Para IA
+      runRabbitConsumer(); // Para Caché/Sincronización
     });
 };
 

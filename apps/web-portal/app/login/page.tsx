@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image'; // 👈 Importamos Image
 import api from '@/lib/axios';
 import Link from 'next/link';
 
@@ -20,14 +21,13 @@ export default function LoginPage() {
     try {
       const response = await api.post('/auth/login', { email, password });
       const userData = response.data.user;
-      // GUARDAR SESIÓN: Guardamos el token para futuras peticiones
+      
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
 
       console.log('Login exitoso, bienvenido:', response.data.user.fullName);
       console.log('ROL DETECTADO:', userData.role);
       
-      // Redirigir al Home o Dashboard
       if (userData.role === 'ADMIN') {
         router.push('/admin'); 
       } else {
@@ -41,8 +41,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-xl rounded-2xl border border-slate-100">
+    // 1. Contenedor Principal: relative para contener la imagen de fondo
+    <div className="relative flex min-h-screen items-center justify-center p-4">
+      
+      {/* 2. IMAGEN DE FONDO (uce_entrada.png) */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/uce_entrada.png" // La imagen que subiste
+          alt="Entrada Universidad Central del Ecuador"
+          fill
+          className="object-cover"
+          priority
+          unoptimized={true}
+        />
+        {/* 3. CAPA OSCURA: bg-black/60 para que el texto resalte sobre el cielo y la entrada */}
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+
+      {/* 4. TARJETA DE LOGIN: z-10 para estar encima y efecto vidrio (backdrop-blur) */}
+      <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl border border-slate-200">
+        
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-blue-900">Bienvenido</h1>
           <p className="mt-2 text-sm text-slate-600 font-medium">Inicia sesión en el portal RVRS</p>
@@ -54,7 +72,7 @@ export default function LoginPage() {
             <input
               type="email"
               required
-              className="w-full px-4 py-2 mt-1 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-black"
+              className="w-full px-4 py-2 mt-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-black bg-white"
               placeholder="usuario@uce.edu.ec"
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -65,25 +83,36 @@ export default function LoginPage() {
             <input
               type="password"
               required
-              className="w-full px-4 py-2 mt-1 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-black"
+              className="w-full px-4 py-2 mt-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-black bg-white"
               placeholder="••••••••"
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          {error && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg font-medium">⚠️ {error}</div>}
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg font-medium">
+              ⚠️ {error}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 text-white bg-blue-700 hover:bg-blue-800 rounded-lg font-bold shadow-lg transition-all"
+            className={`w-full py-3 text-white rounded-lg font-bold shadow-lg transition-all transform active:scale-[0.98] ${
+              loading 
+                ? 'bg-blue-400 cursor-wait' 
+                : 'bg-blue-700 hover:bg-blue-800'
+            }`}
           >
             {loading ? 'Verificando...' : 'Entrar'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500 font-medium">
-          ¿No tienes cuenta? <Link href="/register" className="text-blue-700 hover:underline font-bold">Regístrate aquí</Link>
+        <p className="text-center text-sm text-slate-600 font-medium">
+          ¿No tienes cuenta?{' '}
+          <Link href="/register" className="text-blue-700 hover:underline font-bold">
+            Regístrate aquí
+          </Link>
         </p>
       </div>
     </div>

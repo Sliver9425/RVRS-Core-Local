@@ -6,6 +6,7 @@ import complaintRoutes from './routes/complaint.routes';
 import userRoutes from './routes/user.routes';
 import authRoutes from './routes/auth.routes';
 import swaggerUi from 'swagger-ui-express';
+import { rabbit } from './config/rabbitmq';
 import { swaggerSpec } from './config/swagger';
 
 const app = express();
@@ -14,7 +15,8 @@ const PORT = process.env.PORT || 3001;
 // --- Middlewares ---
 // NOTA: No usamos CORS aquí porque Nginx (Gateway) lo maneja.
 // Si lo activas aquí, tendrás error de "Double CORS headers".
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
 
 // --- Rutas ---
@@ -54,6 +56,9 @@ const startServer = async () => {
     // Si falla, DEBE lanzar error para que el catch final mate el proceso
     await connectKafka();
     console.log('✅ Kafka Conectado');
+
+    const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
+    await rabbit.connect(rabbitUrl);
 
     // 2. Levantar servidor Express
     app.listen(Number(PORT), '0.0.0.0', () => {

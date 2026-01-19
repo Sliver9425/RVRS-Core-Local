@@ -99,3 +99,14 @@ variable "supabase_db_url" {
   type        = string
   sensitive   = true
 }
+
+variable "smtp_user" {
+  description = "Correo de Gmail para notificaciones"
+  type        = string
+}
+
+variable "smtp_pass" {
+  description = "Contraseña de aplicación de Gmail"
+  type        = string
+  sensitive   = true
+}

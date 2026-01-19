@@ -29,3 +29,9 @@ resource "aws_ecr_repository" "frontend" {
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 }
+
+resource "aws_ecr_repository" "notification_service" {
+  name                 = "rvrs-notification-service"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
