@@ -1,21 +1,24 @@
 FROM node:18-alpine
 
-# Instalamos dependencias necesarias para compilar módulos si hiciera falta
+# Instalamos compatibilidad para librerías nativas
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Copiamos los archivos de dependencias
-COPY package*.json ./
+# 1. Copiamos archivos de configuración de dependencias
+# (Copiamos el lockfile si usas npm, o pnpm-lock.yaml si usas pnpm)
+COPY package*.json tsconfig.json ./
 
-# Instalamos todo (incluyendo devDependencies como ts-node y typescript)
+# 2. Instalamos todas las dependencias para poder compilar
 RUN npm install
 
-# Copiamos el resto del código del servicio
+# 3. Copiamos el código fuente (la carpeta src)
 COPY . .
 
-# Exponemos el puerto si fuera necesario (opcional para este servicio)
-# EXPOSE 3005 
+# 4. Compilamos el código TS a JS usando el tsconfig
+# Esto leerá 'src' y creará la carpeta 'dist' gracias a tu outDir
+RUN npm run build
 
-# 🔥 CAMBIO CLAVE: Usamos npx para asegurar que encuentre ts-node
-CMD ["npx", "ts-node", "src/index.ts"]
+# 5. Comando de ejecución
+# Ya no usamos ts-node, usamos node directamente sobre el archivo compilado
+CMD ["node", "dist/index.js"]
