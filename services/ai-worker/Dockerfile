@@ -1,20 +1,21 @@
-# Usamos una imagen ligera de Python
+# 1. Usamos una imagen ligera de Python
 FROM python:3.10-slim
 
-# Directorio de trabajo dentro del contenedor
+# 2. Directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema (git a veces es necesario para algunas libs)
+# 3. Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# Copiamos los requisitos primero (para aprovechar el caché de Docker)
-COPY requirements.txt .
+# 4. Copiamos los requisitos (Ruta relativa desde la RAÍZ del monorepo)
+COPY services/ai-worker/requirements.txt .
 
-# Instalamos las librerías
+# 5. Instalamos las librerías
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos el resto del código (main.py, logic.py, .env, faiss_index, etc.)
-COPY . .
 
-# Comando para iniciar la app (Nótese --host 0.0.0.0 para que Docker lo exponga)
+COPY services/ai-worker/ .
+
+# 7. Comando para iniciar la app
+# Ahora sí encontrará 'main' porque está en el WORKDIR
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

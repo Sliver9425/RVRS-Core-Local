@@ -3,7 +3,7 @@
 resource "aws_ecr_repository" "command_service" {
   name                 = "rvrs-command-service"
   image_tag_mutability = "MUTABLE"
-  force_delete         = true # Para que no te cobre si borras el lab
+  force_delete         = true 
 }
 
 resource "aws_ecr_repository" "query_service" {
@@ -32,6 +32,12 @@ resource "aws_ecr_repository" "frontend" {
 
 resource "aws_ecr_repository" "notification_service" {
   name                 = "rvrs-notification-service"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
+
+resource "aws_ecr_repository" "mqtt_bridge" {
+  name                 = "rvrs-mqtt-bridge"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 }

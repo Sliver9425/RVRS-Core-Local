@@ -1,5 +1,3 @@
-# infrastructure/ecs.tf
-
 locals {
   account_id   = "857521755952"
   region       = "us-east-1"
@@ -12,9 +10,9 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   
-  # 🔥 ACTUALIZADO A 16 GB RAM
-  cpu    = 4096   # 4 vCPU (Límite usual de Academy)
-  memory = 16384  # 16 GB RAM 
+  # Recursos Totales (4 vCPU y 16 GB RAM)
+  cpu    = 4096
+  memory = 16384 
   
   execution_role_arn = local.lab_role_arn
   task_role_arn      = local.lab_role_arn
@@ -26,7 +24,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       name      = "frontend",
       image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-frontend:v9",
       essential = true,
-      memory    = 1536, # 1.5 GB
+      memory    = 1024,
       portMappings = [{ containerPort = 3000 }],
       environment = [
         { name = "NEXT_PUBLIC_API_URL", value = "" }, 
@@ -45,11 +43,11 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       name      = "gateway",
       image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-gateway:v8",
       essential = true,
-      memory    = 512, # Nginx es ligero
+      memory    = 256,
       portMappings = [{ containerPort = 80 }],
       dependsOn = [
         { containerName = "command-service", condition = "START" },
-        { containerName = "query-service",   condition = "START" }
+        { containerName = "query-service",    condition = "START" }
       ],
       logConfiguration = {
         logDriver = "awslogs",
@@ -62,20 +60,17 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       name      = "command-service",
       image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-command-service:v14",
       essential = true,
-      memory    = 1536, # 1.5 GB
+      memory    = 1536,
       portMappings = [{ containerPort = 3001 }],
       environment = [
         { name = "PORT", value = "3001" },
         { name = "DATABASE_URL", value = local.supabase_url },
         { name = "KAFKA_BROKER", value = "127.0.0.1:9092" },
-        { name = "B2_APPLICATION_KEY_ID", value = var.b2_key_id },
-        { name = "B2_APPLICATION_KEY",    value = var.b2_application_key },
-        { name = "B2_BUCKET_ID",          value = var.b2_bucket_id },
         { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" },
         { name = "NODE_OPTIONS", value = "--dns-result-order=ipv4first --max-old-space-size=1024" }
       ],
       dependsOn = [
-        { containerName = "kafka", condition = "HEALTHY" },
+        { containerName = "kafka", condition = "HEALTHY" }, 
         { containerName = "rabbitmq", condition = "HEALTHY" }
       ],
       logConfiguration = { logDriver = "awslogs", options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "command" } }
@@ -84,9 +79,9 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 3. QUERY SERVICE ---
     {
       name      = "query-service",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-query-service:v13",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-query-service:v15",
       essential = true,
-      memory    = 1536, # 1.5 GB
+      memory    = 1536,
       portMappings = [{ containerPort = 3002 }],
       environment = [
         { name = "PORT", value = "3002" },
@@ -98,7 +93,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       ],
       dependsOn = [
         { containerName = "kafka", condition = "HEALTHY" },
-        { containerName = "redis", condition = "HEALTHY" },
+        { containerName = "redis", condition = "START" },
         { containerName = "rabbitmq", condition = "HEALTHY" }
       ],
       logConfiguration = { logDriver = "awslogs", options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "query" } }
@@ -107,47 +102,43 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 4. NOTIFICATION SERVICE ---
     {
       name      = "notification-service",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-notification-service:v2",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-notification-service:v3",
       essential = true,
-      memory    = 512,
+      memory    = 256,
       environment = [
-        { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" },
-        { name = "SMTP_USER",    value = var.smtp_user },
-        { name = "SMTP_PASS",    value = var.smtp_pass }
+        { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" }
       ],
       dependsOn = [
-        { containerName = "rabbitmq", condition = "HEALTHY" }
+        { containerName = "rabbitmq", condition = "START" }
       ],
       logConfiguration = {
         logDriver = "awslogs",
-        options = { 
-          "awslogs-group"         = "/ecs/rvrs-stack", 
-          "awslogs-region"        = local.region, 
-          "awslogs-stream-prefix" = "notification",
-          "awslogs-create-group"  = "true" 
-        }
+        options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "notification", "awslogs-create-group" = "true" }
       }
     },
 
     # --- 5. AI WORKER ---
     {
       name      = "ai-worker",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-ai-worker:v2",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-ai-worker:v6",
       essential = false, 
-      memory    = 2048, # 2 GB para procesamiento de IA
+      memory    = 1536,
       environment = [
-        { name = "KAFKA_BROKER", value = "127.0.0.1:9092" },
-        { name = "GEMINI_API_KEY", value = var.gemini_api_key },
-        { name = "NODE_OPTIONS", value = "--max-old-space-size=1024" }
+        { name = "KAFKA_BOOTSTRAP_SERVERS", value = "127.0.0.1:9092" },
+        { name = "KAFKA_TOPIC",             value = "complaint.received" },
+        { name = "KAFKA_GROUP_ID",          value = "ai-worker-v17" }, 
+        { name = "GEMINI_API_KEY",          value = var.gemini_api_key }
       ],
       dependsOn = [
         { containerName = "kafka", condition = "HEALTHY" }
       ],
-      logConfiguration = { logDriver = "awslogs", options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "ai" } }
+      logConfiguration = { 
+        logDriver = "awslogs", 
+        options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "ai" } 
+      }
     },
 
-    # --- INFRAESTRUCTURA ---
-
+    # --- 6. REDIS ---
     {
       name = "redis", 
       image = "redis:alpine", 
@@ -160,45 +151,29 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       }
     },
 
+    # --- 7. KAFKA (Reserva estable de 3GB) ---
     {
-      name = "zookeeper", 
-      image = "confluentinc/cp-zookeeper:7.3.0", 
+      name  = "kafka",
+      image = "apache/kafka:latest",
       essential = true,
-      memory = 1024,
-      environment = [
-        { name = "ZOOKEEPER_CLIENT_PORT", value = "2181" },
-        { name = "ZOOKEEPER_TICK_TIME", value = "2000" },
-        { name = "KAFKA_HEAP_OPTS", value = "-Xmx512M -Xms512M" },
-        { name = "KAFKA_OPTS", value = "-Dzookeeper.4lw.commands.whitelist=*" } 
-      ],
-      healthCheck = {
-        command     = ["CMD-SHELL", "echo ruok | nc localhost 2181 || exit 1"],
-        interval    = 30, timeout = 10, retries = 5, startPeriod = 300 
-      },
-      logConfiguration = {
-        logDriver = "awslogs",
-        options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "zookeeper" }
-      }
-    },
-
-    {
-      name = "kafka", 
-      image = "confluentinc/cp-kafka:7.3.0", 
-      essential = true, 
-      memory = 4096, # 4 GB dedicados a Kafka
+      memory    = 3072, 
       portMappings = [{ containerPort = 9092 }],
-      dependsOn = [{ containerName = "zookeeper", condition = "HEALTHY" }],
       environment = [
-        { name = "KAFKA_BROKER_ID", value = "1" },
-        { name = "KAFKA_ZOOKEEPER_CONNECT", value = "127.0.0.1:2181" },
+        { name = "KAFKA_NODE_ID", value = "1" },
+        { name = "KAFKA_PROCESS_ROLES", value = "broker,controller" },
+        { name = "KAFKA_CONTROLLER_QUORUM_VOTERS", value = "1@localhost:9093" },
+        { name = "KAFKA_LISTENERS", value = "PLAINTEXT://:9092,CONTROLLER://:9093" },
         { name = "KAFKA_ADVERTISED_LISTENERS", value = "PLAINTEXT://127.0.0.1:9092" },
+        { name = "KAFKA_CONTROLLER_LISTENER_NAMES", value = "CONTROLLER" },
+        { name = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", value = "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT" },
+        { name = "KAFKA_INTER_BROKER_LISTENER_NAME", value = "PLAINTEXT" },
         { name = "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR", value = "1" },
-        { name = "KAFKA_AUTO_CREATE_TOPICS_ENABLE", value = "true" },
-        { name = "KAFKA_HEAP_OPTS", value = "-Xmx2G -Xms2G" }
+        { name = "KAFKA_CLUSTER_ID", value = "MkU3OEVBNTcwNTJENDM2Qk" },
+        { name = "KAFKA_AUTO_CREATE_TOPICS_ENABLE", value = "true" }
       ],
       healthCheck = {
-        command     = ["CMD-SHELL", "kafka-topics --bootstrap-server 127.0.0.1:9092 --list || exit 1"],
-        interval    = 30, timeout = 10, retries = 10, startPeriod = 300
+        command     = ["CMD-SHELL", "nc -z localhost 9092 || exit 1"],
+        interval    = 30, timeout = 10, retries = 5, startPeriod = 120
       },
       logConfiguration = {
         logDriver = "awslogs",
@@ -206,11 +181,12 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       }
     },
 
+    # --- 8. RABBITMQ (Reserva estable de 2GB) ---
     {
       name = "rabbitmq",
       image = "rabbitmq:3-management",
       essential = true,
-      memory = 1536, # 1.5 GB
+      memory = 2048,
       portMappings = [
         { containerPort = 5672 },
         { containerPort = 15672 }
@@ -220,32 +196,55 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
         "echo 'secret_cookie_rvrs_123' > /var/lib/rabbitmq/.erlang.cookie && chmod 600 /var/lib/rabbitmq/.erlang.cookie && docker-entrypoint.sh rabbitmq-server"
       ],
       environment = [
+        { name = "RABBITMQ_VM_MEMORY_HIGH_WATERMARK_RELATIVE", value = "0.4" },
         { name = "RABBITMQ_DEFAULT_USER", value = "guest" },
         { name = "RABBITMQ_DEFAULT_PASS", value = "guest" },
-        { name = "RABBITMQ_NODENAME", value = "rabbit@localhost" },
-        { name = "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS", value = "+P 1048576" }
+        { name = "RABBITMQ_NODENAME", value = "rabbit@localhost" }
       ],
       healthCheck = {
-        command = ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"],
-        interval = 30, timeout = 20, retries = 5, startPeriod = 300 
+        command = ["CMD-SHELL", "rabbitmqctl status || exit 1"],
+        interval = 30, timeout = 20, retries = 5, startPeriod = 300
       },
       logConfiguration = {
         logDriver = "awslogs",
         options = { "awslogs-group" = "/ecs/rvrs-stack", "awslogs-region" = local.region, "awslogs-stream-prefix" = "rabbitmq" }
       }
+    },
+
+    # --- 9. MQTT BRIDGE (v3 corregido con logs) ---
+    {
+      name      = "mqtt-bridge",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-mqtt-bridge:v4",
+      essential = true,
+      memory    = 256,
+      environment = [
+        { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" }
+      ],
+      dependsOn = [{ containerName = "rabbitmq", condition = "HEALTHY" }],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = { 
+          "awslogs-group"         = "/ecs/rvrs-stack", 
+          "awslogs-region"        = local.region, 
+          "awslogs-stream-prefix" = "mqtt-bridge",
+          "awslogs-create-group"  = "true"
+        }
+      }
     }
   ])
-  }
+}
 
 # --- SERVICIO ECS ---
 resource "aws_ecs_service" "main" {
   name            = "rvrs-stack-service"
-  cluster         = aws_ecs_cluster.main.id
+  cluster          = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.monorepo_stack.arn
   desired_count   = 1
-  launch_type     = "FARGATE"
+  launch_type      = "FARGATE"
   enable_execute_command = true
-  health_check_grace_period_seconds = 300
+  
+  # Aumentado para dar tiempo a Kafka KRaft
+  health_check_grace_period_seconds = 600
 
   network_configuration {
     subnets          = [aws_subnet.public_1.id, aws_subnet.public_2.id]
@@ -302,9 +301,9 @@ resource "aws_appautoscaling_target" "ecs_target" {
 }
 
 resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
-  name               = "cpu-autoscaling"
-  policy_type        = "TargetTrackingScaling"
-  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  name                = "cpu-autoscaling"
+  policy_type         = "TargetTrackingScaling"
+  resource_id         = aws_appautoscaling_target.ecs_target.resource_id
   scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
   service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
 
