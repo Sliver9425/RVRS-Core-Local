@@ -45,6 +45,11 @@ jobs:
         run: |
           ECR_URL=${{ env.ECR_URL }} IMAGE_TAG=${{ env.IMAGE_TAG }} pnpm turbo run deploy:docker --filter=...[origin/QA]
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"    
+
       - name: Terraform Init & Apply
         working-directory: ./infraestructure
         env:
