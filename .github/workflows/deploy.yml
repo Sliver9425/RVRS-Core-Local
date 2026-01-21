@@ -43,7 +43,7 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         
         run: |
-          ECR_URL=${{ env.ECR_URL }} IMAGE_TAG=${{ env.IMAGE_TAG }} pnpm turbo run deploy:docker --filter=...[origin/QA]
+          ECR_URL=${{ env.ECR_URL }} IMAGE_TAG=${{ env.IMAGE_TAG }} pnpm turbo run deploy:docker --filter=...[origin/QA] --force
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
