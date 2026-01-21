@@ -7,7 +7,7 @@ RUN npm install -g pnpm
 FROM base AS builder
 WORKDIR /app
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 WORKDIR /app/apps/web-portal
 ENV NEXT_TELEMETRY_DISABLED 1
 RUN pnpm run build
