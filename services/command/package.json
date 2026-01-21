@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "deploy:docker": "docker build -t $ECR_URL/rvrs-command-service:$IMAGE_TAG -f Dockerfile ../../ && docker push $ECR_URL/rvrs-command-service:$IMAGE_TAG"
   },
   "keywords": [],
   "author": "",

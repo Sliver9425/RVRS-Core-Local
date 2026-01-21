@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turborepo.com/schema.json",
+  "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
     "build": {
@@ -16,6 +16,18 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "// --- NUEVAS TAREAS PARA CI/CD ---": {},
+    "deploy:docker": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "inputs": [
+        "src/**", 
+        "Dockerfile", 
+        "index.js", 
+        "main.py", 
+        "package.json"
+      ]
     }
   }
 }

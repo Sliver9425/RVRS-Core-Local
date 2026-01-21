@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "// --- NUEVO SCRIPT PARA CI/CD ---": "",
+    "deploy:docker": "docker build -t $ECR_URL/rvrs-frontend:$IMAGE_TAG -f Dockerfile ../../ && docker push $ECR_URL/rvrs-frontend:$IMAGE_TAG"
   },
   "dependencies": {
     "axios": "^1.13.2",

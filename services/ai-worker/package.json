@@ -1,0 +1,7 @@
+{
+  "name": "ai-worker",
+  "version": "1.0.0",
+  "scripts": {
+    "deploy:docker": "docker build -t $ECR_URL/rvrs-ai-worker:$IMAGE_TAG -f Dockerfile ../../ && docker push $ECR_URL/rvrs-ai-worker:$IMAGE_TAG"
+  }
+}

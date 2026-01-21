@@ -24,16 +24,12 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# --- RUTAS DE COPIA (MODO STANDALONE) ---
-
-# 1. Copiamos el server y los archivos generados
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web-portal/.next/standalone ./
 
-# 2. Copiamos los archivos estáticos internos (CSS, JS de Next)
+
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web-portal/.next/static ./apps/web-portal/.next/static
 
-# 3. Copiamos la carpeta PUBLIC (Donde están tus imágenes UCE.jpg, etc.)
-# IMPORTANTE: Next.js standalone busca 'public' dentro de la ruta del proyecto
+
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web-portal/public ./apps/web-portal/public
 
 USER nextjs

@@ -1,0 +1,9 @@
+{
+  "name": "gateway",
+  "version": "1.0.0",
+  "description": "Nginx Gateway - Punto de entrada",
+  "scripts": {
+    "build": "echo 'No build step'",
+    "deploy:docker": "docker build -t $ECR_URL/rvrs-gateway:$IMAGE_TAG -f Dockerfile .. && docker push $ECR_URL/rvrs-gateway:$IMAGE_TAG"
+  }
+}

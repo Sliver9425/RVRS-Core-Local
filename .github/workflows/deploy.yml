@@ -1,0 +1,68 @@
+name: CI/CD Pipeline QA
+
+on:
+  push:
+    branches: [ QA ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Login to Amazon ECR
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 857521755952.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Build and Push with Turborepo
+        env:
+          ECR_URL: 857521755952.dkr.ecr.us-east-1.amazonaws.com
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: pnpm deploy:docker --filter=...[origin/QA]
+
+      - name: Terraform Init & Apply
+        working-directory: ./infraestructure
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          # Variables de Backblaze para el Backend
+          AWS_ACCESS_KEY_ID_S3: ${{ secrets.B2_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY_S3: ${{ secrets.B2_SECRET_KEY }}
+          # Inyección de variables a Terraform
+          TF_VAR_image_tag: ${{ github.sha }}
+          TF_VAR_supabase_db_url: ${{ secrets.SUPABASE_URL }}
+          TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          TF_VAR_b2_key_id: ${{ secrets.B2_KEY_ID }}
+          TF_VAR_b2_application_key: ${{ secrets.B2_APPLICATION_KEY }}
+          TF_VAR_b2_bucket_id: ${{ secrets.B2_BUCKET_ID }}
+          TF_VAR_smtp_user: ${{ secrets.SMTP_USER }}
+          TF_VAR_smtp_pass: ${{ secrets.SMTP_PASS }}
+        run: |
+          terraform init \
+            -backend-config="access_key=$AWS_ACCESS_KEY_ID_S3" \
+            -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY_S3"
+          terraform apply -auto-approve

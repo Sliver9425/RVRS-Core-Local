@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "// --- NUEVO SCRIPT PARA CI/CD ---": "",
+    "deploy:docker": "docker build -t $ECR_URL/rvrs-query-service:$IMAGE_TAG -f Dockerfile ../../ && docker push $ECR_URL/rvrs-query-service:$IMAGE_TAG"
   },
   "keywords": [],
   "author": "",

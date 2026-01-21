@@ -110,3 +110,9 @@ variable "smtp_pass" {
   type        = string
   sensitive   = true
 }
+
+variable "image_tag" {
+  description = "Tag de la imagen proveniente del commit de GitHub"
+  type        = string
+  default     = "latest"
+}

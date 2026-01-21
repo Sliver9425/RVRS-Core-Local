@@ -22,7 +22,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 0. FRONTEND ---
     {
       name      = "frontend",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-frontend:v9",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-frontend:${var.image_tag}",
       essential = true,
       memory    = 1024,
       portMappings = [{ containerPort = 3000 }],
@@ -41,7 +41,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 1. GATEWAY ---
     {
       name      = "gateway",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-gateway:v8",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-gateway:${var.image_tag}",
       essential = true,
       memory    = 256,
       portMappings = [{ containerPort = 80 }],
@@ -58,7 +58,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 2. COMMAND SERVICE ---
     {
       name      = "command-service",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-command-service:v14",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-command-service:${var.image_tag}",
       essential = true,
       memory    = 1536,
       portMappings = [{ containerPort = 3001 }],
@@ -79,7 +79,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 3. QUERY SERVICE ---
     {
       name      = "query-service",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-query-service:v15",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-query-service:${var.image_tag}",
       essential = true,
       memory    = 1536,
       portMappings = [{ containerPort = 3002 }],
@@ -102,7 +102,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 4. NOTIFICATION SERVICE ---
     {
       name      = "notification-service",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-notification-service:v3",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-notification-service:${var.image_tag}",
       essential = true,
       memory    = 256,
       environment = [
@@ -120,7 +120,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 5. AI WORKER ---
     {
       name      = "ai-worker",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-ai-worker:v6",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-ai-worker:${var.image_tag}",
       essential = false, 
       memory    = 1536,
       environment = [
@@ -214,7 +214,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     # --- 9. MQTT BRIDGE (v3 corregido con logs) ---
     {
       name      = "mqtt-bridge",
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-mqtt-bridge:v4",
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-mqtt-bridge:${var.image_tag}",
       essential = true,
       memory    = 256,
       environment = [
