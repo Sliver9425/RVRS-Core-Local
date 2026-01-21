@@ -41,7 +41,9 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-        run: pnpm turbo run deploy:docker --filter=...[origin/QA]
+        
+        run: |
+          ECR_URL=${{ env.ECR_URL }} IMAGE_TAG=${{ env.IMAGE_TAG }} pnpm turbo run deploy:docker --filter=...[origin/QA]
 
       - name: Terraform Init & Apply
         working-directory: ./infraestructure

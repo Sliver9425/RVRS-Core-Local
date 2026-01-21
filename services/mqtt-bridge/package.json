@@ -6,7 +6,7 @@
   "scripts": {
     "build": "echo 'No compilation needed for JS'",
     "// --- NUEVO SCRIPT PARA CI/CD ---": "",
-    "deploy:docker": "docker build -t $ECR_URL/rvrs-mqtt-bridge:$IMAGE_TAG -f Dockerfile ../../ && docker push $ECR_URL/rvrs-mqtt-bridge:$IMAGE_TAG"
+    "deploy:docker": "docker build -t ${ECR_URL}/rvrs-mqtt-bridge:${IMAGE_TAG} -f Dockerfile ../../ && docker push ${ECR_URL}/rvrs-mqtt-bridge:${IMAGE_TAG}"
   },
   "dependencies": {
     "mqtt": "^5.0.0",
