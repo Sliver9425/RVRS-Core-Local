@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -17,16 +17,19 @@
       "cache": false,
       "persistent": true
     },
-    "// --- NUEVAS TAREAS PARA CI/CD ---": {},
+    "// --- TAREAS DE DESPLIEGUE ---": {},
     "deploy:docker": {
       "dependsOn": ["build"],
-      "cache": true,
+      "cache": false,
       "inputs": [
-        "src/**", 
-        "Dockerfile", 
-        "index.js", 
-        "main.py", 
-        "package.json"
+        "src/**",
+        "apps/**/Dockerfile",
+        "services/**/Dockerfile",
+        "gateway/Dockerfile",
+        "index.js",
+        "main.py",
+        "package.json",
+        "nginx.conf"
       ]
     }
   }
