@@ -11,27 +11,23 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
-    "check-types": {
-      "dependsOn": ["^check-types"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
     "// --- TAREAS DE DESPLIEGUE ---": {},
     "deploy:docker": {
       "dependsOn": ["build"],
       "cache": false,
-      "passThruEnv": ["ECR_URL", "IMAGE_TAG", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"],
+      "env": [
+        "ECR_URL", 
+        "IMAGE_TAG", 
+        "AWS_ACCESS_KEY_ID", 
+        "AWS_SECRET_ACCESS_KEY", 
+        "AWS_SESSION_TOKEN"
+      ],
       "inputs": [
         "src/**",
         "apps/**/Dockerfile",
         "services/**/Dockerfile",
         "gateway/Dockerfile",
-        "index.js",
-        "main.py",
-        "package.json",
-        "nginx.conf"
+        "package.json"
       ]
     }
   }
