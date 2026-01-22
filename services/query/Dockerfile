@@ -5,6 +5,8 @@ RUN apt-get update -y && apt-get install -y \
     ca-certificates \
     netcat-openbsd \
     dnsutils \
+    host \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo "precedence ::ffff:0:0/96 100" > /etc/gai.conf
