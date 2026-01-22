@@ -1,13 +1,22 @@
 FROM node:18-alpine
+
+# Instalamos pnpm globalmente dentro del contenedor
+RUN npm install -g pnpm
+
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copiamos archivos de dependencias
-COPY package*.json ./
-RUN npm install
+# Copiamos solo el lockfile y el package.json para aprovechar el caché de capas
+COPY package.json pnpm-lock.yaml* tsconfig.json ./
 
-# Copiamos el código del servicio
+# Instalamos dependencias usando pnpm
+RUN pnpm install
+
+# Copiamos el código fuente
 COPY . .
 
-# 🔥 ESPECIFICAMOS LA RUTA ABSOLUTA DENTRO DEL CONTENEDOR
-CMD ["npx", "ts-node", "/app/src/index.ts"]
+# Compilamos TypeScript a JavaScript (esto crea la carpeta /dist)
+RUN pnpm build
+
+# Comando de ejecución para producción
+CMD ["node", "dist/index.js"]
