@@ -1,13 +1,9 @@
 FROM node:18-slim
 
-# Instalamos netcat y procps por si necesitamos debug, además de lo básico
+# Instalamos solo lo esencial para que Prisma y SSL funcionen
 RUN apt-get update -y && apt-get install -y \
     openssl \
     ca-certificates \
-    netcat-openbsd \
-    dnsutils \
-    host \
-    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -38,16 +34,14 @@ WORKDIR /app/services/command
 RUN pnpm build
 
 # ==========================================
-# PARCHE DE RED IPV4 (NUEVO)
+# ENTRYPOINT SIMPLIFICADO
 # ==========================================
-# 1. Copiamos el script dentro de la imagen
+# Copiamos el script que ya no hace búsquedas de IP
 COPY services/command/entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# 2. Le damos permisos de ejecución (CRÍTICO)
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# 3. Definimos este script como la "puerta de entrada"
+# Definimos la puerta de entrada
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# 4. El comando que se pasará al entrypoint
+# Ejecutamos con pnpm start
 CMD ["pnpm", "start"]

@@ -1,58 +1,47 @@
 FROM node:18-slim
 
+# 1. Instalamos lo mínimo (quitamos ping/dnsutils porque usaremos IP directa)
 RUN apt-get update -y && apt-get install -y \
     openssl \
     ca-certificates \
-    netcat-openbsd \
-    dnsutils \
-    host \
-    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
-
-RUN echo "precedence ::ffff:0:0/96 100" > /etc/gai.conf
 
 WORKDIR /app
 
-# Dependencias del sistema
-
-
-# 1. Instalar pnpm
+# 2. Instalación de pnpm
 RUN npm install -g pnpm
 
-# 2. Copiar archivos raíz del monorepo
+# 3. Copiar configuración raíz
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 
-# 3. Copiar paquetes compartidos
+# 4. Copiar paquetes compartidos
 COPY packages/database ./packages/database
 COPY packages/typescript-config ./packages/typescript-config
 
-# 4. Copiar el servicio QUERY 
+# 5. Copiar el servicio QUERY (Asegúrate de copiar el del servicio correcto)
 COPY services/query ./services/query
 
-# 5. Instalar dependencias (permitiendo actualizar el lockfile)
+# 6. Instalar dependencias
 RUN pnpm install --no-frozen-lockfile
 
-# 6. Generar Prisma Client
+# 7. Generar Prisma y Build de base de datos
 WORKDIR /app/packages/database
 RUN npx prisma generate
-
-# ==========================================
-# NUEVO 6.5: COMPILAR PAQUETE DE BASE DE DATOS
-# Esto genera /app/packages/database/dist
-# ==========================================
 RUN pnpm build
 
-# 7. BUILD: Compilar el servicio Query (TypeScript a JS)
+# 8. Compilar el servicio Query
 WORKDIR /app/services/query
 RUN pnpm build
 
-COPY services/command/entrypoint.sh /usr/local/bin/entrypoint.sh
+# ==========================================
+# ENTRYPOINT (Sin parches de red manuales)
+# ==========================================
 
-# 2. Le damos permisos de ejecución (CRÍTICO)
+# IMPORTANTE: Copiamos el entrypoint del directorio de query
+COPY services/query/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# 3. Definimos este script como la "puerta de entrada"
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# 4. El comando que se pasará al entrypoint
-CMD ["npm", "start"]
+# Usamos pnpm start para mantener consistencia con el monorepo
+CMD ["pnpm", "start"]
