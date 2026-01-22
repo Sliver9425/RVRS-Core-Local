@@ -6,7 +6,7 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "build": "tsc",
-    "deploy:docker": "docker build -t ${ECR_URL}/rvrs-notification-service:${IMAGE_TAG} -f Dockerfile ../../ && docker push ${ECR_URL}/rvrs-notification-service:${IMAGE_TAG}"
+    "deploy:docker": "docker build -t $ECR_URL/rvrs-notification-service:$IMAGE_TAG -f Dockerfile ../../ && docker push $ECR_URL/rvrs-notification-service:$IMAGE_TAG"
   },
   "dependencies": {
     "amqplib": "^0.10.3",
