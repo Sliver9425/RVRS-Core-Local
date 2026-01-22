@@ -4,21 +4,21 @@ set -e
 DB_HOST="db.fzhnevqdagmsqibnaovb.supabase.co"
 echo "🔎 Buscando IPv4 para $DB_HOST..."
 
-# Usamos un filtro más estricto para asegurar que solo guardamos formato IPv4 (puntos, no dos puntos)
-IPV4=$(nslookup "$DB_HOST" 8.8.8.8 | grep -E 'Address:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | awk '{print $2}' | head -n 1)
+# Usamos una forma más limpia de extraer la IP de nslookup
+# Buscamos la línea que sigue a 'Name:' y extraemos la dirección
+IPV4=$(nslookup "$DB_HOST" 8.8.8.8 | grep -A 1 "Name:" | grep "Address" | awk '{print $2}' | head -n 1)
 
 if [ -z "$IPV4" ]; then
-  # Segundo intento por si el formato de salida de nslookup varía
-  IPV4=$(getent ahosts "$DB_HOST" | grep -v ":" | head -n 1 | awk '{ print $1 }')
+  echo "⚠️ nslookup falló, intentando con getent..."
+  IPV4=$(getent hosts "$DB_HOST" | awk '{print $1}' | head -n 1)
 fi
 
-if [ -z "$IPV4" ]; then
-  echo "❌ Error: No se pudo encontrar una IPv4 válida para $DB_HOST"
+if [ -z "$IPV4" ] || [ "$IPV4" = "8.8.8.8" ]; then
+  echo "❌ Error: No se pudo encontrar una IPv4 válida."
 else
   echo "✅ IPv4 REAL encontrada: $IPV4"
   echo "🛠️ Inyectando en /etc/hosts..."
-  # Limpiamos cualquier entrada previa del mismo host para evitar duplicados
-  sed -i "/$DB_HOST/d" /etc/hosts || true
+  # Usamos >> para añadir al final sin intentar renombrar el archivo (evita el error de sed)
   echo "$IPV4 $DB_HOST" >> /etc/hosts
 fi
 

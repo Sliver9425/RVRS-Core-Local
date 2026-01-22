@@ -1,6 +1,11 @@
 FROM node:18-slim
 
-RUN apt-get update -y && apt-get install -y openssl ca-certificates
+RUN apt-get update -y && apt-get install -y \
+    openssl \
+    ca-certificates \
+    netcat-openbsd \
+    dnsutils \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN echo "precedence ::ffff:0:0/96 100" > /etc/gai.conf
 
