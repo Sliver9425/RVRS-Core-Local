@@ -1,30 +1,27 @@
 #!/bin/sh
 set -e
 
-# URL de tu base de datos
 DB_HOST="db.fzhnevqdagmsqibnaovb.supabase.co"
-
 echo "🔎 Buscando IPv4 para $DB_HOST..."
 
-# Extracción precisa: buscamos la línea de 'Address' que viene después del 'Name' del host
-IPV4=$(nslookup "$DB_HOST" 8.8.8.8 | grep -A 1 "Name:.*$DB_HOST" | grep "Address" | awk '{print $2}' | head -n 1)
+# 1. Obtenemos todas las direcciones
+# 2. Filtramos para eliminar IPv6 (las que tienen :)
+# 3. Filtramos para quedarnos con el formato de IP (números y puntos)
+IPV4=$(nslookup "$DB_HOST" 8.8.8.8 | grep -A 1 "Name:" | grep "Address" | awk '{print $2}' | grep -v ":" | grep -E '^[0-9.]+$' | head -n 1)
 
-# Plan B: Si nslookup falla o devuelve algo vacío
 if [ -z "$IPV4" ]; then
   echo "⚠️ nslookup falló, intentando con getent..."
-  IPV4=$(getent hosts "$DB_HOST" | awk '{print $1}' | head -n 1)
+  IPV4=$(getent ahosts "$DB_HOST" | awk '{print $1}' | grep -v ":" | grep -E '^[0-9.]+$' | head -n 1)
 fi
 
-# Validación final para evitar capturar la IP del DNS (8.8.8.8)
-if [ -z "$IPV4" ] || [ "$IPV4" = "8.8.8.8" ]; then
-  echo "❌ Error: No se pudo encontrar una IPv4 válida para la base de datos."
+if [ -z "$IPV4" ]; then
+  echo "❌ Error: No se encontró una dirección IPv4 pura."
 else
   echo "✅ IPv4 REAL encontrada: $IPV4"
   echo "🛠️ Inyectando en /etc/hosts..."
-  # Importante: Usamos >> (append) para evitar el error "Device or resource busy" de sed
+  # Usamos append (>>) para evitar errores de permisos de re-escritura
   echo "$IPV4 $DB_HOST" >> /etc/hosts
 fi
 
 echo "🚀 Iniciando la aplicación..."
-# Ejecuta el comando definido en el Dockerfile (pnpm start)
 exec "$@"
