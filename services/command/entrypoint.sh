@@ -4,24 +4,23 @@ set -e
 DB_HOST="db.fzhnevqdagmsqibnaovb.supabase.co"
 echo "🔎 Buscando IPv4 para $DB_HOST..."
 
-# Intento 1: Usar getent (tu método actual)
-IPV4=$(getent ahosts "$DB_HOST" | grep -v ":" | head -n 1 | awk '{ print $1 }')
+# Usamos un filtro más estricto para asegurar que solo guardamos formato IPv4 (puntos, no dos puntos)
+IPV4=$(nslookup "$DB_HOST" 8.8.8.8 | grep -E 'Address:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | awk '{print $2}' | head -n 1)
 
-# Intento 2: Si falla, forzar nslookup contra el DNS de Google
 if [ -z "$IPV4" ]; then
-  echo "⚠️ Resolución interna falló, intentando con nslookup (8.8.8.8)..."
-  IPV4=$(nslookup "$DB_HOST" 8.8.8.8 | grep 'Address' | tail -n 1 | awk '{print $2}')
+  # Segundo intento por si el formato de salida de nslookup varía
+  IPV4=$(getent ahosts "$DB_HOST" | grep -v ":" | head -n 1 | awk '{ print $1 }')
 fi
 
 if [ -z "$IPV4" ]; then
-  echo "❌ Error: No se pudo encontrar una IPv4 para $DB_HOST"
+  echo "❌ Error: No se pudo encontrar una IPv4 válida para $DB_HOST"
 else
-  echo "✅ IPv4 encontrada: $IPV4"
+  echo "✅ IPv4 REAL encontrada: $IPV4"
   echo "🛠️ Inyectando en /etc/hosts..."
-  # Forzamos la entrada en el archivo de hosts
-  echo "$IPV4 $DB_HOST" >> /etc/hosts || echo "⚠️ No se pudo escribir en /etc/hosts (permisos)"
+  # Limpiamos cualquier entrada previa del mismo host para evitar duplicados
+  sed -i "/$DB_HOST/d" /etc/hosts || true
+  echo "$IPV4 $DB_HOST" >> /etc/hosts
 fi
 
 echo "🚀 Iniciando la aplicación..."
-# Esto asegura que el comando 'pnpm start' se ejecute correctamente
 exec "$@"
