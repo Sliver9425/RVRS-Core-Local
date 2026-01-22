@@ -1,7 +1,12 @@
 FROM node:18-slim
 
 # Instalamos netcat y procps por si necesitamos debug, además de lo básico
-RUN apt-get update -y && apt-get install -y openssl ca-certificates netcat-openbsd
+RUN apt-get update -y && apt-get install -y \
+    openssl \
+    ca-certificates \
+    netcat-openbsd \
+    dnsutils \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
