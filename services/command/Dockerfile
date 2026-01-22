@@ -43,4 +43,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # 4. El comando que se pasará al entrypoint
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]
