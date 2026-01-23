@@ -1,8 +1,8 @@
-name: CI/CD Pipeline QA
+name: CI/CD Pipeline DEV
 
 on:
   push:
-    branches: [ QA ]
+    branches: [ dev ]
 
 jobs:
   deploy:
@@ -74,4 +74,5 @@ jobs:
           terraform init \
             -backend-config="access_key=$AWS_ACCESS_KEY_ID_S3" \
             -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY_S3"
-          terraform apply -auto-approve
+            -backend-config="key=terraform-dev.tfstate"
+          terraform apply -auto-approve -input=false

@@ -1,7 +1,7 @@
 # infrastructure/provider.tf
 
 provider "aws" {
-  region = "us-east-1" # La región clásica de AWS Academy
+  region = "us-east-1" 
 }
 
 terraform {
