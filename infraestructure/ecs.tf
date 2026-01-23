@@ -56,6 +56,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     },
 
     # --- 2. COMMAND SERVICE ---
+    # --- 2. COMMAND SERVICE ---
     {
       name      = "command-service",
       image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-command-service:${var.image_tag}",
@@ -67,7 +68,14 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
         { name = "DATABASE_URL", value = local.supabase_url },
         { name = "KAFKA_BROKER", value = "127.0.0.1:9092" },
         { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" },
-        { name = "NODE_OPTIONS", value = "--dns-result-order=ipv4first --max-old-space-size=1024" }
+        { name = "NODE_OPTIONS", value = "--dns-result-order=ipv4first --max-old-space-size=1024" },
+        
+        # --- NUEVAS VARIABLES DE BACKBLAZE ---
+        { name = "B2_ENDPOINT",    value = var.b2_endpoint },
+        { name = "B2_REGION",      value = var.b2_region },
+        { name = "B2_KEY_ID",      value = var.b2_key_id },
+        { name = "B2_APP_KEY",     value = var.b2_app_key },
+        { name = "B2_BUCKET_NAME", value = var.b2_bucket_name }
       ],
       dependsOn = [
         { containerName = "kafka", condition = "HEALTHY" }, 

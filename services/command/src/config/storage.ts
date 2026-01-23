@@ -13,7 +13,8 @@ const s3 = new S3Client({
   credentials: {
     accessKeyId: process.env.B2_KEY_ID || '',
     secretAccessKey: process.env.B2_APP_KEY || ''
-  }
+  },
+  forcePathStyle: true
 });
 
 export const upload = multer({
