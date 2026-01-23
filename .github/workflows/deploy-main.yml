@@ -1,8 +1,8 @@
-name: CI/CD Pipeline QA
+name: CI/CD Pipeline PROD
 
 on:
   push:
-    branches: [ QA ]
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # 1. Obtener el ID de la cuenta de AWS dinámicamente
+      
       - name: Get AWS Account ID
         id: account
         run: |
@@ -37,13 +37,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 
-      # 2. Setup Terraform (DEBE ir antes del build de Docker para crear los ECR)
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.7.0"
 
-      - name: Terraform Init & Apply (QA)
+      - name: Terraform Init & Apply (PROD)
         working-directory: ./infraestructure
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -66,10 +66,10 @@ jobs:
             -reconfigure \
             -backend-config="access_key=$AWS_ACCESS_KEY_ID_S3" \
             -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY_S3" \
-            -backend-config="key=terraform.tfstate"
+            -backend-config="key=terraform-main.tfstate"
           terraform apply -auto-approve -input=false
 
-      # 3. Login a ECR usando el ID dinámico
+      
       - name: Login to Amazon ECR
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -78,7 +78,6 @@ jobs:
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.account.outputs.id }}.dkr.ecr.us-east-1.amazonaws.com
 
-      # 4. Build y Push con Turborepo
       - name: Build and Push with Turborepo
         env:
           ECR_URL: ${{ steps.account.outputs.id }}.dkr.ecr.us-east-1.amazonaws.com
@@ -87,4 +86,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: |
-          pnpm turbo run deploy:docker --filter=...[origin/QA] --force
+          pnpm turbo run deploy:docker --filter=...[origin/main] --force
