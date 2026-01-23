@@ -1,7 +1,11 @@
+data "aws_caller_identity" "current" {}
+
 locals {
-  account_id   = "857521755952"
+  # Extraemos el ID dinámicamente
+  account_id   = data.aws_caller_identity.current.account_id
   region       = "us-east-1"
-  lab_role_arn = "arn:aws:iam::857521755952:role/LabRole"
+  # Construimos el ARN del LabRole dinámicamente
+  lab_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole"
   supabase_url = var.supabase_db_url
 }
 
