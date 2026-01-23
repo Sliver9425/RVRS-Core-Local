@@ -60,7 +60,6 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
     },
 
     # --- 2. COMMAND SERVICE ---
-    # --- 2. COMMAND SERVICE ---
     {
       name      = "command-service",
       image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/rvrs-command-service:${var.image_tag}",
@@ -74,7 +73,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
         { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" },
         { name = "NODE_OPTIONS", value = "--dns-result-order=ipv4first --max-old-space-size=1024" },
         
-        # --- NUEVAS VARIABLES DE BACKBLAZE ---
+       
         { name = "B2_ENDPOINT",    value = var.b2_endpoint },
         { name = "B2_REGION",      value = var.b2_region },
         { name = "B2_KEY_ID",      value = var.b2_key_id },
@@ -119,9 +118,14 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       memory    = 256,
       environment = [
         { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" }
+        { name = "SMTP_HOST", value = "smtp.gmail.com" },
+        { name = "SMTP_PORT", value = "465" }, # 465 para SSL, 587 para TLS
+        { name = "SMTP_USER", value = var.smtp_user },
+        { name = "SMTP_PASS", value = var.smtp_pass },
+        { name = "FROM_EMAIL", value = var.smtp_user }
       ],
       dependsOn = [
-        { containerName = "rabbitmq", condition = "START" }
+        { containerName = "rabbitmq", condition = "HEALTHY" }
       ],
       logConfiguration = {
         logDriver = "awslogs",
@@ -212,6 +216,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
         { name = "RABBITMQ_DEFAULT_USER", value = "guest" },
         { name = "RABBITMQ_DEFAULT_PASS", value = "guest" },
         { name = "RABBITMQ_NODENAME", value = "rabbit@localhost" }
+        
       ],
       healthCheck = {
         command = ["CMD-SHELL", "rabbitmqctl status || exit 1"],
