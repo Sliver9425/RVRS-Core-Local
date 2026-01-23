@@ -63,9 +63,11 @@ jobs:
           TF_VAR_image_tag: ${{ github.sha }}
           TF_VAR_supabase_db_url: ${{ secrets.SUPABASE_URL }}
           TF_VAR_gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          TF_VAR_b2_endpoint: ${{ secrets.B2_ENDPOINT }}
+          TF_VAR_b2_region: ${{ secrets.B2_REGION }}
           TF_VAR_b2_key_id: ${{ secrets.B2_KEY_ID }}
-          TF_VAR_b2_application_key: ${{ secrets.B2_APPLICATION_KEY }}
-          TF_VAR_b2_bucket_id: ${{ secrets.B2_BUCKET_ID }}
+          TF_VAR_b2_app_key: ${{ secrets.B2_APP_KEY }}
+          TF_VAR_b2_bucket_name: ${{ secrets.B2_BUCKET_NAME }}
           TF_VAR_smtp_user: ${{ secrets.SMTP_USER }}
           TF_VAR_smtp_pass: ${{ secrets.SMTP_PASS }}
         run: |
