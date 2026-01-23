@@ -117,7 +117,7 @@ resource "aws_ecs_task_definition" "monorepo_stack" {
       essential = true,
       memory    = 256,
       environment = [
-        { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" }
+        { name = "RABBITMQ_URL", value = "amqp://guest:guest@127.0.0.1:5672" },
         { name = "SMTP_HOST", value = "smtp.gmail.com" },
         { name = "SMTP_PORT", value = "465" }, # 465 para SSL, 587 para TLS
         { name = "SMTP_USER", value = var.smtp_user },
