@@ -70,20 +70,32 @@ variable "query_service_port" {
 # 4. CREDENCIALES Y SERVICIOS EXTERNOS (SaaS/PaaS)
 # ==========================================
 
+variable "b2_endpoint" {
+  description = "Backblaze S3 Endpoint"
+  type        = string
+}
+
+variable "b2_region" {
+  description = "Backblaze Region"
+  type        = string
+}
+
 variable "b2_key_id" {
   description = "Backblaze Key ID"
   type        = string
   sensitive   = true 
 }
 
-variable "b2_application_key" {
+
+variable "b2_app_key" {
   description = "Backblaze Application Key"
   type        = string
   sensitive   = true
 }
 
-variable "b2_bucket_id" {
-  description = "Backblaze Bucket ID"
+
+variable "b2_bucket_name" {
+  description = "Backblaze Bucket Name"
   type        = string
 }
 
