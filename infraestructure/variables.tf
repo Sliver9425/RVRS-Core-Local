@@ -105,7 +105,7 @@ variable "gemini_api_key" {
   sensitive   = true
 }
 
-# --- ESTA ES LA VARIABLE QUE FALTABA ---
+
 variable "supabase_db_url" {
   description = "URL de conexión completa a Supabase (PaaS) con password codificado"
   type        = string

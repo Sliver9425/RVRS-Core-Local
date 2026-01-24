@@ -1,18 +1,18 @@
 import amqp from 'amqplib';
-import nodemailer from 'nodemailer'; // 1. Importamos la librería de email
+import nodemailer from 'nodemailer'; 
 import dotenv from 'dotenv';
 
-// Cargar variables de entorno (.env)
+
 dotenv.config();
 
 const RABBIT_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 
-// 2. Configurar el "Cartero" (Transporter) de Gmail
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.SMTP_USER, // Tu correo (desde docker-compose)
-    pass: process.env.SMTP_PASS  // Tu contraseña de aplicación (desde docker-compose)
+    user: process.env.SMTP_USER, 
+    pass: process.env.SMTP_PASS  
   }
 });
 
@@ -20,7 +20,7 @@ async function startNotificationService() {
   try {
     console.log('📧 Notification Service iniciando...');
     
-    // Verificar que tengamos credenciales antes de arrancar
+    
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
         console.warn('⚠️ ADVERTENCIA: Credenciales SMTP no encontradas. Los correos podrían fallar.');
     }
@@ -28,7 +28,7 @@ async function startNotificationService() {
     const connection = await amqp.connect(RABBIT_URL);
     const channel = await connection.createChannel();
 
-    // 1. Asegurar Exchange y Cola
+    
     const exchange = 'complaints_events';
     const queue = 'notification_queue'; 
 
@@ -38,25 +38,22 @@ async function startNotificationService() {
 
     console.log('✅ Esperando mensajes para enviar correos REALES...');
 
-    // 2. Procesar mensajes
-    // Hacemos la función async para poder usar 'await' al enviar el correo
+    
     channel.consume(queue, async (msg) => {
       if (msg) {
         const content = JSON.parse(msg.content.toString());
         console.log(`\n📥 [RABBITMQ] Procesando evento ID: ${content.id}`);
         
         try {
-            // 3. ENVIAR CORREO REAL
+            
             const info = await transporter.sendMail({
-                from: `"Sistema de Denuncias RVRS" <${process.env.SMTP_USER}>`, // Remitente
+                from: `"Sistema de Denuncias RVRS" <${process.env.SMTP_USER}>`, 
                 
-                // ⚠️ OJO: Para probar, pon tu correo personal aquí "hardcodeado". 
-                // Cuando el sistema esté listo, usarás: content.userEmail
                 to: 'damianalejandro.9422@gmail.com', 
                 
-                subject: `📢 Nueva Denuncia: ${content.title}`, // Asunto dinámico
+                subject: `📢 Nueva Denuncia: ${content.title}`, 
                 
-                // Cuerpo del correo en HTML bonito
+                
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
                         <div style="background-color: #d32f2f; padding: 20px; text-align: center;">
@@ -98,15 +95,12 @@ async function startNotificationService() {
 
             console.log(`✅ [EMAIL ENVIADO] Message ID: ${info.messageId}`);
             
-            // Confirmamos a RabbitMQ SOLO si el correo salió bien
+            
             channel.ack(msg);
 
         } catch (emailError) {
             console.error('❌ Error enviando el correo:', emailError);
-            // IMPORTANTE: Aquí decidimos qué hacer.
-            // Si hacemos ack(), perdemos el mensaje.
-            // Si no hacemos nada, RabbitMQ lo reenviará eternamente (bucle infinito).
-            // Por ahora, para evitar bucles en desarrollo, confirmamos el mensaje aunque falle.
+            
             channel.ack(msg); 
         }
       }

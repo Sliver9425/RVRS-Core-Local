@@ -8,11 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- CONFIGURACIÓN DIRECTA DE GEMINI (SDK OFICIAL) ---
-# Esto evita el error de validación de LangChain
+
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# --- 1. Cargar la "Memoria" (RAG con LangChain) ---
+
 embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
 
 try:
@@ -23,7 +22,7 @@ except Exception as e:
     print(f"⚠️ Error cargando FAISS: {e}")
     retriever = None
 
-# --- Funciones Auxiliares ---
+
 def clean_json_string(json_str: str) -> str:
     """Limpia el string si Gemini devuelve markdown (```json ... ```)"""
     if "```json" in json_str:
@@ -48,12 +47,12 @@ async def download_image(url: str):
         print(f"   ⚠️ No se pudo descargar la imagen: {e}")
     return None
 
-# --- 2. Función Principal ---
+
 async def analyze_severity(description: str, evidence_url: str = None) -> dict:
     try:
         print(f"   🧠 Consultando a Gemini (SDK Oficial)...")
 
-        # PASO A: Recuperar Contexto Legal (RAG usando LangChain)
+        
         context_text = ""
         if retriever:
             try:
@@ -62,7 +61,7 @@ async def analyze_severity(description: str, evidence_url: str = None) -> dict:
             except Exception as e:
                 print(f"   ⚠️ Falló RAG, usando conocimiento general: {e}")
 
-        # PASO B: Preparar Prompt
+        
         prompt_text = f"""
         Actúa como el sistema experto de disciplina de la Universidad Central del Ecuador.
         
@@ -89,13 +88,12 @@ async def analyze_severity(description: str, evidence_url: str = None) -> dict:
         }}
         """
 
-        # PASO C: Preparar Contenido (Multimodal)
-        # Usamos el modelo Flash que es rápido y ve imágenes
+        
         model = genai.GenerativeModel('gemini-flash-latest')
         
         content_parts = [prompt_text]
         
-        # Descargamos la imagen y la añadimos al prompt
+        
         image_data = await download_image(evidence_url)
         if image_data:
             content_parts.append(image_data)
@@ -103,11 +101,10 @@ async def analyze_severity(description: str, evidence_url: str = None) -> dict:
         else:
             print("   ⚠️ Analizando solo texto.")
 
-        # PASO D: Generar Respuesta
-        # Usamos generate_content_async del SDK oficial
+        
         response = await model.generate_content_async(content_parts)
         
-        # PASO E: Parsear JSON
+        
         cleaned_json = clean_json_string(response.text)
         return json.loads(cleaned_json)
 

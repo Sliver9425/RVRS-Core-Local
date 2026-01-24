@@ -26,9 +26,7 @@ resource "aws_security_group" "lb" {
   }
 }
 
-# B. Seguridad para los Contenedores (ECS Tasks)
-# ¡OJO AQUÍ! Solo permite tráfico que venga DEL Load Balancer.
-# Nadie puede conectarse directo a tus contenedores, deben pasar por el ALB.
+
 resource "aws_security_group" "ecs_tasks" {
   name        = "rvrs-ecs-tasks-sg"
   description = "Permitir entrada solo desde el ALB"
@@ -97,7 +95,7 @@ resource "aws_ecs_cluster" "main" {
   }
 }
 
-# Capacidad por defecto (usaremos Fargate Spot para ahorrar dinero en AWS Academy)
+
 resource "aws_ecs_cluster_capacity_providers" "main" {
   cluster_name = aws_ecs_cluster.main.name
 

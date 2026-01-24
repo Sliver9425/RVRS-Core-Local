@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// --- ESTADO GLOBAL ---
+
 let isKafkaConnected = false; 
 
 const redisClient = createClient({
@@ -28,15 +28,15 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: 'query-service-group-v3' });
 
-// --- CONSUMIDOR KAFKA CON REINTENTOS ---
+
 const runKafkaConsumer = async () => {
-  // Usamos la variable global isKafkaConnected
+  
   while (!isKafkaConnected) {
     try {
       console.log('⌛ [Kafka] Intentando conectar consumidor...');
       await consumer.connect();
       
-      // Intentamos suscripción
+      
       await consumer.subscribe({ topic: 'complaint.processed', fromBeginning: false });
 
       await consumer.run({
@@ -70,7 +70,7 @@ const runKafkaConsumer = async () => {
         },
       });
 
-      isKafkaConnected = true; // ✅ Actualizamos el estado global
+      isKafkaConnected = true; 
       console.log('✅ [Kafka] Query Service conectado y escuchando');
     } catch (error) {
       console.error('⏳ Kafka no listo o tópico inexistente. Reintentando en 5s...');
@@ -93,7 +93,7 @@ const runRabbitConsumer = async () => {
     });
 };
 
-// --- ENDPOINTS ---
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'active', 

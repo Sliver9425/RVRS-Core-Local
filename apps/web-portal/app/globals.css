@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
-/* Estilos base para asegurar que el fondo sea siempre claro por ahora */
+
 :root {
-  --background: #f8fafc; /* Un gris muy sutil (slate-50) */
-  --foreground: #0f172a; /* Azul muy oscuro (slate-900) */
+  --background: #f8fafc; 
+  --foreground: #0f172a; 
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  /* Eliminamos el modo oscuro automático para evitar conflictos visuales en desarrollo */
+  
 }
 
-/* Clases de utilidad personalizadas si llegaras a necesitarlas */
+
 @layer components {
   .btn-primary {
     @apply bg-blue-700 text-white py-2 px-4 rounded-lg hover:bg-blue-800 transition-colors shadow-md;

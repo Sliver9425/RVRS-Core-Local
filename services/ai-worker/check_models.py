@@ -2,7 +2,7 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Cargar variables de entorno (.env)
+
 load_dotenv()
 
 api_key = os.getenv("GOOGLE_API_KEY")
@@ -19,7 +19,7 @@ else:
         
         found_any = False
         for m in genai.list_models():
-            # Filtramos solo los que sirven para generar texto (generateContent)
+            
             if 'generateContent' in m.supported_generation_methods:
                 print(f"✅ {m.name}")
                 found_any = True

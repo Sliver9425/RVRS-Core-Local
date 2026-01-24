@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # --- NUEVO: Obtener el ID de la cuenta actual ---
+      
       - name: Get AWS Account ID
         id: account
         run: |
@@ -37,7 +37,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 
-      # --- NUEVO: Terraform va PRIMERO para crear los repositorios ECR ---
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:

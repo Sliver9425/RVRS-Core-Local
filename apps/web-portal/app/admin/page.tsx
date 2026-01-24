@@ -8,29 +8,28 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [adminUser, setAdminUser] = useState<{ fullName: string } | null>(null);
   
-  // Datos
+  
   const [allComplaints, setAllComplaints] = useState<any[]>([]);
   const [filteredComplaints, setFilteredComplaints] = useState<any[]>([]);
   
-  // Búsqueda y Modal
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedComplaint, setSelectedComplaint] = useState<any | null>(null);
 
-  // 1. Verificar Sesión de Admin
+  
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
       router.push('/login');
     } else {
       const parsedUser = JSON.parse(storedUser);
-      // Validar si es ADMIN (Opcional, pero recomendado)
-      // if (parsedUser.role !== 'ADMIN') router.push('/');
+
       setAdminUser(parsedUser);
       fetchAllComplaints();
     }
   }, [router]);
 
-  // 2. Obtener TODAS las denuncias
+  
   const fetchAllComplaints = async () => {
     try {
       const response = await apiQuery.get('/complaints');
@@ -42,7 +41,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // 3. Lógica del Buscador (Filtro en tiempo real)
+  
   useEffect(() => {
     const results = allComplaints.filter(c => 
       c.userId.toLowerCase().includes(searchTerm.toLowerCase()) || 

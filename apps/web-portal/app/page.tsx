@@ -11,7 +11,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(false);
 
-  // Estados para el Modal y Datos
+  
   const [selectedComplaint, setSelectedComplaint] = useState<any | null>(null);
   const [complaintData, setComplaintData] = useState({
     title: '',
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [myComplaints, setMyComplaints] = useState<any[]>([]);
 
-  // 1. Manejo de Sesión
+  
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
@@ -34,7 +34,7 @@ export default function Dashboard() {
     }
   }, [router, activeTab]);
 
-  // 2. Previsualización
+  
   useEffect(() => {
     if (!file) {
       setPreviewUrl(null);
@@ -45,7 +45,7 @@ export default function Dashboard() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
 
-  // 3. Obtener Denuncias
+  
   const fetchMyComplaints = async (userId: string) => {
     try {
       const response = await apiQuery.get(`/complaints/user/${userId}`);
@@ -55,13 +55,13 @@ export default function Dashboard() {
     }
   };
 
-  // 4. Logout
+  
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
   };
 
-  // 5. Enviar Denuncia
+  
   const handleSubmitComplaint = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return alert("Por favor, adjunta evidencia.");
@@ -111,7 +111,7 @@ export default function Dashboard() {
               <Image 
                 src="/UCE_logo.png" 
                 alt="Logo UCE" 
-                width={70} // Aumentado para llenar el nuevo contenedor
+                width={70} 
                 height={70} 
                 className="object-contain" 
                 unoptimized={true}

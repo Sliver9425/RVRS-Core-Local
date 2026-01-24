@@ -8,7 +8,7 @@ class RabbitMQClient {
   private connected: boolean = false;
 
   async connect(url: string) {
-    // Si ya estamos conectados, no hacemos nada
+    
     if (this.connected && this.channel) return;
 
     try {
@@ -17,7 +17,7 @@ class RabbitMQClient {
     
       const connection: any = await amqp.connect(url);
       
-      // Asignamos a la propiedad de la clase
+      
       this.connection = connection;
 
       
@@ -26,14 +26,14 @@ class RabbitMQClient {
       this.connected = true;
       console.log(`✅ [RabbitMQ] Conectado exitosamente`);
 
-      // Configurar el Exchange
+      
       if (this.channel) {
         await this.channel.assertExchange('complaints_events', 'fanout', { durable: true });
       }
 
     } catch (error) {
       console.error('❌ [RabbitMQ] Error de conexión:', error);
-      // Reintentar en 5 segundos
+      
       setTimeout(() => this.connect(url), 5000);
     }
   }

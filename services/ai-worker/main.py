@@ -12,7 +12,6 @@ load_dotenv()
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092")
 CONSUME_TOPIC = os.getenv("KAFKA_TOPIC", "complaint.received") 
 PRODUCE_TOPIC = os.getenv("KAFKA_PROCESSED_TOPIC", "complaint.processed")
-# 🔥 Usamos el Group ID de las variables de entorno para poder cambiarlo desde Terraform
 GROUP_ID = os.getenv("KAFKA_GROUP_ID", "ai-worker-vfinal-kraft")
 
 consumer = None
@@ -55,18 +54,18 @@ async def consume_loop():
 async def lifespan(app: FastAPI):
     global consumer, producer
     
-    # --- INICIO DEL PRODUCTOR ---
+    
     print("🔗 Conectando Productor...")
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
     await producer.start()
 
-    # --- INICIO DEL CONSUMIDOR CON REINTENTOS (Blindaje KRaft) ---
+   
     consumer = AIOKafkaConsumer(
         CONSUME_TOPIC,
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         group_id=GROUP_ID,
         auto_offset_reset='earliest',
-        retry_backoff_ms=5000 # Espera entre reintentos internos
+        retry_backoff_ms=5000 
     )
 
     connected = False

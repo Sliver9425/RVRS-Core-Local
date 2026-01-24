@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image'; // 👈 Importamos Image
+import Image from 'next/image'; 
 import api from '@/lib/axios';
 import Link from 'next/link';
 
@@ -41,13 +41,13 @@ export default function LoginPage() {
   };
 
   return (
-    // 1. Contenedor Principal: relative para contener la imagen de fondo
+    
     <div className="relative flex min-h-screen items-center justify-center p-4">
       
       {/* 2. IMAGEN DE FONDO (uce_entrada.png) */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/uce_entrada.png" // La imagen que subiste
+          src="/uce_entrada.png" 
           alt="Entrada Universidad Central del Ecuador"
           fill
           className="object-cover"

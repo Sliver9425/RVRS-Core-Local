@@ -10,7 +10,7 @@ resource "aws_vpc" "main" {
   }
 }
 
-# 2. Internet Gateway (Para que la red tenga salida a internet)
+
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   tags = {
@@ -18,7 +18,7 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# 3. Subnets Públicas (Donde vivirán el Load Balancer y el Bastion Host)
+
 resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
@@ -39,7 +39,7 @@ resource "aws_subnet" "public_2" {
   }
 }
 
-# 4. Route Table (Las reglas de tráfico)
+
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -83,7 +83,7 @@ resource "aws_security_group" "bastion" {
   }
 }
 
-# La instancia Bastion
+
 resource "aws_instance" "bastion" {
   ami           = "ami-0c101f26f147fa7fd" # Amazon Linux 2023 us-east-1
   instance_type = "t3.micro"

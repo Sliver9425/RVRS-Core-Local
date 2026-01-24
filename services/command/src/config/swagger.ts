@@ -15,9 +15,7 @@ const options = {
       },
     ],
   },
-  // --- AQUÍ ESTÁ LA MAGIA ---
-  // __dirname nos da la ubicación actual (src/config)
-  // '../routes/*.ts' nos lleva a la carpeta de rutas de forma segura
+
   apis: [path.join(__dirname, '../routes/*.ts')], 
 };
 

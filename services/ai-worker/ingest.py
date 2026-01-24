@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def ingest_statute():
-    # RUTA ORIGINAL CONFIRMADA
+    
     file_path = "./data/estatuto.txt"
     
     if not os.path.exists(file_path):
@@ -25,8 +25,7 @@ def ingest_statute():
         print(f"❌ Error leyendo el archivo: {e}")
         return
     
-    # 1. Partir el texto (AJUSTADO PARA CAPTURAR RESOLUCIONES ENTERAS)
-    # Usamos 2500 para que un artículo largo o la resolución completa quepan en un solo vector
+    
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=2500,    
         chunk_overlap=250,   
@@ -35,10 +34,10 @@ def ingest_statute():
     docs = text_splitter.split_documents(documents)
     print(f"🧩 Texto dividido en {len(docs)} fragmentos de alto contexto.")
     
-    # 2. Configurar Embeddings
+    
     embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
     
-    # 3. Procesamiento por LOTES (Batching para evitar error 429)
+    
     batch_size = 5
     vectorstore = None
     
@@ -57,15 +56,15 @@ def ingest_statute():
             else:
                 vectorstore.add_documents(batch)
             
-            # Pausa de seguridad
+            
             time.sleep(2) 
             
         except Exception as e:
             print(f"❌ Error en lote {current_batch}: {e}")
             print("   ⏳ Esperando 20 segundos por si es Rate Limit...")
-            time.sleep(20) # Espera más larga si falla
+            time.sleep(20) 
             try:
-                # Reintento simple
+                
                 if vectorstore is None:
                     vectorstore = FAISS.from_documents(batch, embeddings)
                 else:
@@ -73,7 +72,7 @@ def ingest_statute():
             except Exception as e2:
                 print(f"   ❌ Falló el reintento. Saltando este lote. Error: {e2}")
 
-    # 4. Guardar
+   
     if vectorstore:
         vectorstore.save_local("faiss_index")
         print("✅ ¡ÉXITO! Base de conocimiento actualizada en 'faiss_index'")

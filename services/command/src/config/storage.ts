@@ -3,7 +3,7 @@ import multer from 'multer';
 import multerS3 from 'multer-s3';
 import path from 'path';
 import dotenv from 'dotenv';
-import { Request } from 'express'; // <--- Importamos esto para tipar 'req'
+import { Request } from 'express'; 
 
 dotenv.config();
 
@@ -23,7 +23,7 @@ export const upload = multer({
     bucket: process.env.B2_BUCKET_NAME || '',
     acl: 'public-read',
     contentType: multerS3.AUTO_CONTENT_TYPE,
-    // TIPADO EXPLÍCITO AQUÍ:
+    
     metadata: function (req: Request, file: Express.Multer.File, cb: any) {
       cb(null, { fieldName: file.fieldname });
     },

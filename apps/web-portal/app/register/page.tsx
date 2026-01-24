@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // 👈 IMPORTANTE: Importamos Image
+import Image from 'next/image'; 
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 
@@ -49,17 +49,17 @@ export default function RegisterPage() {
   };
 
   return (
-    // 1. Contenedor Principal: "relative" para permitir posicionamiento absoluto adentro
+    
     <div className="relative flex min-h-screen items-center justify-center p-4">
       
       {/* 2. IMAGEN DE FONDO */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/UCE.jpg" // Asegúrate de que la imagen esté en la carpeta /public
+          src="/UCE.jpg" 
           alt="Campus Universidad Central del Ecuador"
-          fill // Esto hace que cubra toda la pantalla
-          className="object-cover" // Recorta la imagen para que no se deforme
-          priority // Carga la imagen con alta prioridad
+          fill 
+          className="object-cover" 
+          priority 
           unoptimized={true}
         />
         {/* 3. CAPA OSCURA (OVERLAY): Para que el formulario resalte */}
