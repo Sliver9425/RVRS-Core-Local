@@ -1,0 +1,49 @@
+name: Auditoría de Seguridad - Dependency-Check
+
+on:
+  push:
+    branches: [ main, master, QA ]
+  pull_request:
+    branches: [ main, master, QA ]
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código fuente
+        uses: actions/checkout@v4
+
+      - name: Instalar PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Configurar entorno de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Instalar dependencias del proyecto
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Ejecutar OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        id: Dependency-Check
+        continue-on-error: true
+        with:
+          project: 'Proyecto Monorepo QA - Grupo ${{ github.repository }}'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: >
+            --disableNodeAudit
+            --disablePnpmAudit
+            --disableYarnAudit
+
+      - name: Subir Reporte de Vulnerabilidades como Artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-seguridad-owasp
+          path: reports/dependency-check-report.html
